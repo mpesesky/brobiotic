@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: brobiotic-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: NCBI_API_KEY
+        sync: false
+      - key: ANALYTICS_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://brobiotic.onrender.com"]'
+      - key: DATABASE_PATH
+        value: /data/brobiotic.db
+    disk:
+      name: brobiotic-data
+      mountPath: /data
+      sizeGB: 1
+    healthCheckPath: /api/health
+
+  - type: web
+    name: brobiotic
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://brobiotic-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

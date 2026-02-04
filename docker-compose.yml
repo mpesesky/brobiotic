@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - NCBI_API_KEY=${NCBI_API_KEY:-}
+      - ANALYTICS_API_KEY=${ANALYTICS_API_KEY:-}
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:80","http://frontend"]
+      - DATABASE_PATH=${DATABASE_PATH:-data/brobiotic.db}
+    volumes:
+      - ./backend/app:/app/app
+      - backend-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Development mode - use this for local development
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+    profiles:
+      - dev
+
+volumes:
+  backend-data:
