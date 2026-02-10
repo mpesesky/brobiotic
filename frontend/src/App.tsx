@@ -3,6 +3,7 @@ import { ArticleInput } from './components/ArticleInput';
 import { OptionsPanel } from './components/OptionsPanel';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { HowTo } from './components/HowTo';
+import { LoadingOverlay } from './components/LoadingOverlay';
 import { fetchArticle, processArticle, reportBadOutput } from './api/client';
 import type { ArticleFetchResponse, ProcessResponse, KnowledgeLevel, ReportBadOutputRequest } from './types';
 
@@ -67,6 +68,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      {isLoading && <LoadingOverlay />}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
           <div>
