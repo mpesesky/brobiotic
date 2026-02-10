@@ -38,7 +38,7 @@ function App() {
 
     try {
       const result = await processArticle({
-        identifier: article.pmid,
+        identifier: article.article_id,
         ...options,
       });
       setProcessedResult(result);
@@ -68,10 +68,10 @@ function App() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-5">
           <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
-            PubMed Translator & Summarizer
+            Article Translator & Summarizer
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Understand scientific articles in your language and at your level
+            Understand scientific articles and preprints in your language and at your level
           </p>
         </div>
       </header>
@@ -108,7 +108,7 @@ function App() {
 
       <footer className="border-t border-gray-200 bg-white mt-auto">
         <div className="max-w-6xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
-          Powered by PubMed E-utilities and Claude AI
+          Powered by PubMed, arxiv, biorxiv, medrxiv, and Claude AI
         </div>
       </footer>
     </div>

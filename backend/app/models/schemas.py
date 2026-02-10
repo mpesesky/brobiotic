@@ -11,7 +11,7 @@ class KnowledgeLevel(str, Enum):
 
 class ArticleFetchRequest(BaseModel):
     """Request to fetch an article by identifier."""
-    identifier: str = Field(..., description="PMID, PMCID, DOI, URL, or article title")
+    identifier: str = Field(..., description="PMID, PMCID, DOI, URL, arxiv/biorxiv/medrxiv URL, or article title")
 
 
 class CitationMetricsResponse(BaseModel):
@@ -26,7 +26,8 @@ class CitationMetricsResponse(BaseModel):
 
 class ArticleFetchResponse(BaseModel):
     """Response containing fetched article data."""
-    pmid: str
+    article_id: str
+    source: str = "pubmed"
     pmcid: str | None = None
     doi: str | None = None
     title: str
@@ -55,14 +56,14 @@ class SummarizationOptions(BaseModel):
 
 class ProcessRequest(BaseModel):
     """Request to process an article with translation and/or summarization."""
-    identifier: str = Field(..., description="PMID or other identifier of the article")
+    identifier: str = Field(..., description="Article ID or other identifier")
     translate: TranslationOptions | None = None
     summarize: SummarizationOptions | None = None
 
 
 class ProcessResponse(BaseModel):
     """Response containing processed article data."""
-    pmid: str
+    article_id: str
     title: str
     original_abstract: str
     translated_abstract: str | None = None
@@ -80,7 +81,7 @@ class ProcessResponse(BaseModel):
 
 class ReportBadOutputRequest(BaseModel):
     """Request to report bad output and regenerate."""
-    pmid: str
+    article_id: str
     result_type: str = Field(..., description="'translation' or 'summary'")
     target_language: str | None = None
     knowledge_level: str | None = None

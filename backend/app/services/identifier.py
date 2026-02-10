@@ -9,6 +9,9 @@ class IdentifierType(str, Enum):
     PMCID = "pmcid"
     DOI = "doi"
     TITLE = "title"
+    ARXIV = "arxiv"
+    BIORXIV = "biorxiv"
+    MEDRXIV = "medrxiv"
     UNKNOWN = "unknown"
 
 
@@ -30,9 +33,56 @@ def parse_identifier(input_str: str) -> ParsedIdentifier:
     - DOIs (e.g., "10.1234/example")
     - PubMed URLs (e.g., "https://pubmed.ncbi.nlm.nih.gov/41514338/")
     - PMC URLs (e.g., "https://pmc.ncbi.nlm.nih.gov/articles/PMC4136005/")
+    - arxiv URLs and IDs (e.g., "https://arxiv.org/abs/2401.12345", "arxiv:2401.12345")
+    - biorxiv URLs (e.g., "https://www.biorxiv.org/content/10.1101/2024.01.01.123456v1")
+    - medrxiv URLs (e.g., "https://www.medrxiv.org/content/10.1101/2024.01.01.123456v1")
+    - biorxiv/medrxiv DOIs (10.1101/...)
     - Titles (anything else, used for search)
     """
     input_str = input_str.strip()
+
+    # Check for arxiv URL: arxiv.org/abs/... or arxiv.org/pdf/...
+    arxiv_url_pattern = r"(?:https?://)?(?:export\.)?arxiv\.org/(?:abs|pdf)/(\d{4}\.\d{4,5}(?:v\d+)?)"
+    match = re.search(arxiv_url_pattern, input_str)
+    if match:
+        return ParsedIdentifier(
+            type=IdentifierType.ARXIV,
+            value=match.group(1),
+            original=input_str
+        )
+
+    # Check for arxiv: prefix (e.g., "arxiv:2401.12345")
+    arxiv_prefix_pattern = r"^arxiv:(\d{4}\.\d{4,5}(?:v\d+)?)$"
+    match = re.match(arxiv_prefix_pattern, input_str, re.IGNORECASE)
+    if match:
+        return ParsedIdentifier(
+            type=IdentifierType.ARXIV,
+            value=match.group(1),
+            original=input_str
+        )
+
+    # Check for biorxiv URL
+    biorxiv_url_pattern = r"(?:https?://)?(?:www\.)?biorxiv\.org/content/(10\.1101/[^\s?#]+?)(?:v\d+)?(?:\?|#|$)"
+    match = re.search(biorxiv_url_pattern, input_str)
+    if match:
+        # Strip trailing version from DOI value
+        doi = re.sub(r"v\d+$", "", match.group(1))
+        return ParsedIdentifier(
+            type=IdentifierType.BIORXIV,
+            value=doi,
+            original=input_str
+        )
+
+    # Check for medrxiv URL
+    medrxiv_url_pattern = r"(?:https?://)?(?:www\.)?medrxiv\.org/content/(10\.1101/[^\s?#]+?)(?:v\d+)?(?:\?|#|$)"
+    match = re.search(medrxiv_url_pattern, input_str)
+    if match:
+        doi = re.sub(r"v\d+$", "", match.group(1))
+        return ParsedIdentifier(
+            type=IdentifierType.MEDRXIV,
+            value=doi,
+            original=input_str
+        )
 
     # Check for PubMed URL
     pubmed_url_pattern = r"(?:https?://)?(?:www\.)?pubmed\.ncbi\.nlm\.nih\.gov/(\d+)"
@@ -71,13 +121,22 @@ def parse_identifier(input_str: str) -> ParsedIdentifier:
             original=input_str
         )
 
-    # Check for DOI
+    # Check for DOI - must come after preprint URL checks
     doi_pattern = r"(?:https?://)?(?:dx\.)?(?:doi\.org/)?(10\.\d{4,}/[^\s]+)"
     match = re.search(doi_pattern, input_str)
     if match:
+        doi_value = match.group(1)
+        # 10.1101/ DOIs are biorxiv/medrxiv preprints
+        if doi_value.startswith("10.1101/"):
+            # Default to biorxiv; the preprint client will try both
+            return ParsedIdentifier(
+                type=IdentifierType.BIORXIV,
+                value=doi_value,
+                original=input_str
+            )
         return ParsedIdentifier(
             type=IdentifierType.DOI,
-            value=match.group(1),
+            value=doi_value,
             original=input_str
         )
 

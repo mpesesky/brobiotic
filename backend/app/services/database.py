@@ -37,7 +37,8 @@ class DatabaseService:
         try:
             await db.executescript("""
                 CREATE TABLE IF NOT EXISTS articles (
-                    pmid TEXT PRIMARY KEY,
+                    article_id TEXT PRIMARY KEY,
+                    source TEXT NOT NULL DEFAULT 'pubmed',
                     pmcid TEXT,
                     doi TEXT,
                     title TEXT NOT NULL,
@@ -51,7 +52,7 @@ class DatabaseService:
                 );
 
                 CREATE TABLE IF NOT EXISTS citation_metrics (
-                    pmid TEXT PRIMARY KEY,
+                    article_id TEXT PRIMARY KEY,
                     citation_count INTEGER NOT NULL DEFAULT 0,
                     citations_per_year REAL,
                     relative_citation_ratio REAL,
@@ -63,30 +64,30 @@ class DatabaseService:
 
                 CREATE TABLE IF NOT EXISTS translations (
                     id TEXT PRIMARY KEY,
-                    pmid TEXT NOT NULL,
+                    article_id TEXT NOT NULL,
                     target_language TEXT NOT NULL,
                     translated_title TEXT NOT NULL DEFAULT '',
                     translated_abstract TEXT NOT NULL DEFAULT '',
                     cached_at TEXT NOT NULL,
-                    UNIQUE(pmid, target_language)
+                    UNIQUE(article_id, target_language)
                 );
 
                 CREATE TABLE IF NOT EXISTS summaries (
                     id TEXT PRIMARY KEY,
-                    pmid TEXT NOT NULL,
+                    article_id TEXT NOT NULL,
                     knowledge_level TEXT NOT NULL,
                     summary TEXT NOT NULL DEFAULT '',
                     key_findings TEXT NOT NULL DEFAULT '[]',
                     context TEXT NOT NULL DEFAULT '',
                     acronyms TEXT NOT NULL DEFAULT '[]',
                     cached_at TEXT NOT NULL,
-                    UNIQUE(pmid, knowledge_level)
+                    UNIQUE(article_id, knowledge_level)
                 );
 
                 CREATE TABLE IF NOT EXISTS usage_log (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     event_type TEXT NOT NULL,
-                    pmid TEXT,
+                    article_id TEXT,
                     options TEXT,
                     cache_hit INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL
@@ -94,7 +95,7 @@ class DatabaseService:
 
                 CREATE TABLE IF NOT EXISTS bad_output_reports (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    pmid TEXT NOT NULL,
+                    article_id TEXT NOT NULL,
                     result_type TEXT NOT NULL,
                     result_id TEXT,
                     target_language TEXT,
@@ -105,8 +106,8 @@ class DatabaseService:
 
                 CREATE INDEX IF NOT EXISTS idx_usage_log_event_type ON usage_log(event_type);
                 CREATE INDEX IF NOT EXISTS idx_usage_log_created_at ON usage_log(created_at);
-                CREATE INDEX IF NOT EXISTS idx_usage_log_pmid ON usage_log(pmid);
-                CREATE INDEX IF NOT EXISTS idx_bad_output_reports_pmid ON bad_output_reports(pmid);
+                CREATE INDEX IF NOT EXISTS idx_usage_log_article_id ON usage_log(article_id);
+                CREATE INDEX IF NOT EXISTS idx_bad_output_reports_article_id ON bad_output_reports(article_id);
             """)
             await db.commit()
         finally:
@@ -115,17 +116,18 @@ class DatabaseService:
     # ---- Article cache ----
 
     @classmethod
-    async def get_cached_article(cls, pmid: str) -> dict | None:
+    async def get_cached_article(cls, article_id: str) -> dict | None:
         db = await cls._get_db()
         try:
             cursor = await db.execute(
-                "SELECT * FROM articles WHERE pmid = ?", (pmid,)
+                "SELECT * FROM articles WHERE article_id = ?", (article_id,)
             )
             row = await cursor.fetchone()
             if row is None:
                 return None
             return {
-                "pmid": row["pmid"],
+                "article_id": row["article_id"],
+                "source": row["source"],
                 "pmcid": row["pmcid"],
                 "doi": row["doi"],
                 "title": row["title"],
@@ -147,10 +149,11 @@ class DatabaseService:
         try:
             await db.execute(
                 """INSERT OR REPLACE INTO articles
-                   (pmid, pmcid, doi, title, abstract, authors, journal, pub_date, full_text, has_full_text, cached_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (article_id, source, pmcid, doi, title, abstract, authors, journal, pub_date, full_text, has_full_text, cached_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    article["pmid"],
+                    article["article_id"],
+                    article.get("source", "pubmed"),
                     article.get("pmcid"),
                     article.get("doi"),
                     article["title"],
@@ -170,11 +173,11 @@ class DatabaseService:
     # ---- Citation metrics cache ----
 
     @classmethod
-    async def get_cached_citation_metrics(cls, pmid: str) -> dict | None:
+    async def get_cached_citation_metrics(cls, article_id: str) -> dict | None:
         db = await cls._get_db()
         try:
             cursor = await db.execute(
-                "SELECT * FROM citation_metrics WHERE pmid = ?", (pmid,)
+                "SELECT * FROM citation_metrics WHERE article_id = ?", (article_id,)
             )
             row = await cursor.fetchone()
             if row is None:
@@ -182,7 +185,7 @@ class DatabaseService:
             # 30-day TTL check
             cached_at = datetime.fromisoformat(row["cached_at"])
             if datetime.now(timezone.utc) - cached_at > timedelta(days=30):
-                await db.execute("DELETE FROM citation_metrics WHERE pmid = ?", (pmid,))
+                await db.execute("DELETE FROM citation_metrics WHERE article_id = ?", (article_id,))
                 await db.commit()
                 return None
             return {
@@ -198,17 +201,17 @@ class DatabaseService:
             await db.close()
 
     @classmethod
-    async def cache_citation_metrics(cls, pmid: str, metrics: dict) -> None:
+    async def cache_citation_metrics(cls, article_id: str, metrics: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         db = await cls._get_db()
         try:
             await db.execute(
                 """INSERT OR REPLACE INTO citation_metrics
-                   (pmid, citation_count, citations_per_year, relative_citation_ratio,
+                   (article_id, citation_count, citations_per_year, relative_citation_ratio,
                     nih_percentile, expected_citations, field_citation_rate, cached_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    pmid,
+                    article_id,
                     metrics.get("citation_count", 0),
                     metrics.get("citations_per_year"),
                     metrics.get("relative_citation_ratio"),
@@ -225,19 +228,19 @@ class DatabaseService:
     # ---- Translation cache ----
 
     @classmethod
-    async def get_cached_translation(cls, pmid: str, target_language: str) -> dict | None:
+    async def get_cached_translation(cls, article_id: str, target_language: str) -> dict | None:
         db = await cls._get_db()
         try:
             cursor = await db.execute(
-                "SELECT * FROM translations WHERE pmid = ? AND target_language = ?",
-                (pmid, target_language),
+                "SELECT * FROM translations WHERE article_id = ? AND target_language = ?",
+                (article_id, target_language),
             )
             row = await cursor.fetchone()
             if row is None:
                 return None
             return {
                 "id": row["id"],
-                "pmid": row["pmid"],
+                "article_id": row["article_id"],
                 "target_language": row["target_language"],
                 "translated_title": row["translated_title"],
                 "translated_abstract": row["translated_abstract"],
@@ -247,18 +250,18 @@ class DatabaseService:
             await db.close()
 
     @classmethod
-    async def cache_translation(cls, pmid: str, target_language: str, result: dict) -> str:
+    async def cache_translation(cls, article_id: str, target_language: str, result: dict) -> str:
         result_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         db = await cls._get_db()
         try:
             await db.execute(
                 """INSERT OR REPLACE INTO translations
-                   (id, pmid, target_language, translated_title, translated_abstract, cached_at)
+                   (id, article_id, target_language, translated_title, translated_abstract, cached_at)
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (
                     result_id,
-                    pmid,
+                    article_id,
                     target_language,
                     result.get("translated_title", ""),
                     result.get("translated_abstract", ""),
@@ -273,19 +276,19 @@ class DatabaseService:
     # ---- Summary cache ----
 
     @classmethod
-    async def get_cached_summary(cls, pmid: str, knowledge_level: str) -> dict | None:
+    async def get_cached_summary(cls, article_id: str, knowledge_level: str) -> dict | None:
         db = await cls._get_db()
         try:
             cursor = await db.execute(
-                "SELECT * FROM summaries WHERE pmid = ? AND knowledge_level = ?",
-                (pmid, knowledge_level),
+                "SELECT * FROM summaries WHERE article_id = ? AND knowledge_level = ?",
+                (article_id, knowledge_level),
             )
             row = await cursor.fetchone()
             if row is None:
                 return None
             return {
                 "id": row["id"],
-                "pmid": row["pmid"],
+                "article_id": row["article_id"],
                 "knowledge_level": row["knowledge_level"],
                 "summary": row["summary"],
                 "key_findings": json.loads(row["key_findings"]),
@@ -297,18 +300,18 @@ class DatabaseService:
             await db.close()
 
     @classmethod
-    async def cache_summary(cls, pmid: str, knowledge_level: str, result: dict) -> str:
+    async def cache_summary(cls, article_id: str, knowledge_level: str, result: dict) -> str:
         result_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         db = await cls._get_db()
         try:
             await db.execute(
                 """INSERT OR REPLACE INTO summaries
-                   (id, pmid, knowledge_level, summary, key_findings, context, acronyms, cached_at)
+                   (id, article_id, knowledge_level, summary, key_findings, context, acronyms, cached_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     result_id,
-                    pmid,
+                    article_id,
                     knowledge_level,
                     result.get("summary", ""),
                     json.dumps(result.get("key_findings", [])),
@@ -328,7 +331,7 @@ class DatabaseService:
     async def log_usage(
         cls,
         event_type: str,
-        pmid: str | None = None,
+        article_id: str | None = None,
         options: dict | None = None,
         cache_hit: bool = False,
     ) -> None:
@@ -336,11 +339,11 @@ class DatabaseService:
         db = await cls._get_db()
         try:
             await db.execute(
-                """INSERT INTO usage_log (event_type, pmid, options, cache_hit, created_at)
+                """INSERT INTO usage_log (event_type, article_id, options, cache_hit, created_at)
                    VALUES (?, ?, ?, ?, ?)""",
                 (
                     event_type,
-                    pmid,
+                    article_id,
                     json.dumps(options) if options else None,
                     1 if cache_hit else 0,
                     now,
@@ -355,7 +358,7 @@ class DatabaseService:
     @classmethod
     async def report_bad_output(
         cls,
-        pmid: str,
+        article_id: str,
         result_type: str,
         result_id: str | None = None,
         target_language: str | None = None,
@@ -367,33 +370,33 @@ class DatabaseService:
         try:
             await db.execute(
                 """INSERT INTO bad_output_reports
-                   (pmid, result_type, result_id, target_language, knowledge_level, comment, created_at)
+                   (article_id, result_type, result_id, target_language, knowledge_level, comment, created_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (pmid, result_type, result_id, target_language, knowledge_level, comment, now),
+                (article_id, result_type, result_id, target_language, knowledge_level, comment, now),
             )
             await db.commit()
         finally:
             await db.close()
 
     @classmethod
-    async def invalidate_translation(cls, pmid: str, target_language: str) -> None:
+    async def invalidate_translation(cls, article_id: str, target_language: str) -> None:
         db = await cls._get_db()
         try:
             await db.execute(
-                "DELETE FROM translations WHERE pmid = ? AND target_language = ?",
-                (pmid, target_language),
+                "DELETE FROM translations WHERE article_id = ? AND target_language = ?",
+                (article_id, target_language),
             )
             await db.commit()
         finally:
             await db.close()
 
     @classmethod
-    async def invalidate_summary(cls, pmid: str, knowledge_level: str) -> None:
+    async def invalidate_summary(cls, article_id: str, knowledge_level: str) -> None:
         db = await cls._get_db()
         try:
             await db.execute(
-                "DELETE FROM summaries WHERE pmid = ? AND knowledge_level = ?",
-                (pmid, knowledge_level),
+                "DELETE FROM summaries WHERE article_id = ? AND knowledge_level = ?",
+                (article_id, knowledge_level),
             )
             await db.commit()
         finally:
@@ -406,10 +409,10 @@ class DatabaseService:
         db = await cls._get_db()
         try:
             cursor = await db.execute(
-                """SELECT pmid, COUNT(*) as request_count
+                """SELECT article_id, COUNT(*) as request_count
                    FROM usage_log
-                   WHERE pmid IS NOT NULL
-                   GROUP BY pmid
+                   WHERE article_id IS NOT NULL
+                   GROUP BY article_id
                    ORDER BY request_count DESC
                    LIMIT ?""",
                 (limit,),
@@ -419,11 +422,11 @@ class DatabaseService:
             for row in rows:
                 # Fetch article title if cached
                 art_cursor = await db.execute(
-                    "SELECT title FROM articles WHERE pmid = ?", (row["pmid"],)
+                    "SELECT title FROM articles WHERE article_id = ?", (row["article_id"],)
                 )
                 art_row = await art_cursor.fetchone()
                 results.append({
-                    "pmid": row["pmid"],
+                    "article_id": row["article_id"],
                     "title": art_row["title"] if art_row else None,
                     "request_count": row["request_count"],
                 })
@@ -518,7 +521,7 @@ class DatabaseService:
             return [
                 {
                     "id": row["id"],
-                    "pmid": row["pmid"],
+                    "article_id": row["article_id"],
                     "result_type": row["result_type"],
                     "result_id": row["result_id"],
                     "target_language": row["target_language"],
@@ -574,7 +577,7 @@ class DatabaseService:
             stats["total_bad_reports"] = (await cursor.fetchone())["c"]
 
             cursor = await db.execute(
-                "SELECT COUNT(DISTINCT pmid) as c FROM usage_log WHERE pmid IS NOT NULL"
+                "SELECT COUNT(DISTINCT article_id) as c FROM usage_log WHERE article_id IS NOT NULL"
             )
             stats["unique_articles_requested"] = (await cursor.fetchone())["c"]
 

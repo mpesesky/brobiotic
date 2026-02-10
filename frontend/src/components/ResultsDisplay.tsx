@@ -10,6 +10,13 @@ interface ResultsDisplayProps {
 
 type TabType = 'original' | 'summary' | 'translation';
 
+const SOURCE_BADGES: Record<string, { bg: string; text: string; label: string }> = {
+  pubmed: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'PubMed' },
+  arxiv: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'arXiv' },
+  biorxiv: { bg: 'bg-red-100', text: 'text-red-800', label: 'bioRxiv' },
+  medrxiv: { bg: 'bg-indigo-100', text: 'text-indigo-800', label: 'medRxiv' },
+};
+
 function CacheBadge({ cachedAt }: { cachedAt: string }) {
   const date = new Date(cachedAt);
   const formatted = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -19,6 +26,15 @@ function CacheBadge({ cachedAt }: { cachedAt: string }) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
       </svg>
       Cached {formatted}
+    </span>
+  );
+}
+
+function SourceBadge({ source }: { source: string }) {
+  const badge = SOURCE_BADGES[source] || { bg: 'bg-gray-100', text: 'text-gray-800', label: source };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>
+      {badge.label}
     </span>
   );
 }
@@ -47,7 +63,7 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
     if (!processedResult) return;
     const comment = window.prompt('Optional: describe what was wrong with this output');
     const request: ReportBadOutputRequest = {
-      pmid: processedResult.pmid,
+      article_id: processedResult.article_id,
       result_type: resultType,
       target_language: processedResult.target_language,
       knowledge_level: processedResult.knowledge_level,
@@ -73,6 +89,8 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
         : 'translation'
       : activeTab;
 
+  const isPubMed = article.source === 'pubmed';
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       {/* Article Header */}
@@ -86,8 +104,9 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
           <span>{article.pub_date}</span>
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
+          <SourceBadge source={article.source} />
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-            PMID: {article.pmid}
+            {article.article_id}
           </span>
           {article.pmcid && (
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
@@ -104,8 +123,8 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
           )}
         </div>
 
-        {/* Citation Metrics */}
-        {article.citation_metrics && (
+        {/* Citation Metrics — only for PubMed articles */}
+        {isPubMed && article.citation_metrics && (
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-600">
               <span>
@@ -143,6 +162,15 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
               }
               return null;
             })()}
+          </div>
+        )}
+
+        {/* Preprint notice */}
+        {!isPubMed && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="text-xs text-amber-600 italic">
+              This is a preprint and has not been peer reviewed. Citation metrics are not available for preprints.
+            </p>
           </div>
         )}
       </div>

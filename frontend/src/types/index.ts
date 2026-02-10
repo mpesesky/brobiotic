@@ -14,7 +14,8 @@ export interface CitationMetrics {
 }
 
 export interface ArticleFetchResponse {
-  pmid: string;
+  article_id: string;
+  source: string;
   pmcid: string | null;
   doi: string | null;
   title: string;
@@ -43,7 +44,7 @@ export interface ProcessRequest {
 }
 
 export interface ProcessResponse {
-  pmid: string;
+  article_id: string;
   title: string;
   original_abstract: string;
   translated_abstract?: string;
@@ -64,7 +65,7 @@ export interface ErrorResponse {
 }
 
 export interface ReportBadOutputRequest {
-  pmid: string;
+  article_id: string;
   result_type: 'translation' | 'summary';
   target_language?: string;
   knowledge_level?: string;

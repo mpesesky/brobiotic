@@ -21,14 +21,14 @@ export function ArticleInput({ onFetch, isLoading }: ArticleInputProps) {
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="identifier" className="block text-sm text-gray-600 mb-1.5">
-            PMID, DOI, URL, or title
+            PMID, DOI, URL, arxiv/biorxiv URL, or title
           </label>
           <input
             type="text"
             id="identifier"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="e.g., 41514338"
+            placeholder="e.g., 41514338 or https://arxiv.org/abs/2401.12345"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             disabled={isLoading}
           />

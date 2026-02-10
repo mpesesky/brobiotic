@@ -19,8 +19,9 @@ class CitationMetrics:
 
 @dataclass
 class ArticleMetadata:
-    """Metadata for a PubMed article."""
-    pmid: str
+    """Metadata for an article (PubMed or preprint)."""
+    article_id: str
+    source: str = "pubmed"
     pmcid: str | None = None
     doi: str | None = None
     title: str = ""
@@ -208,7 +209,8 @@ class PubMedClient:
                     doi = article_id.text
 
         return ArticleMetadata(
-            pmid=pmid,
+            article_id=pmid,
+            source="pubmed",
             pmcid=pmcid,
             doi=doi,
             title=title,
@@ -398,7 +400,7 @@ class PubMedClient:
                 article.full_text = full_text
 
         # Fetch citation metrics from iCite
-        article.citation_metrics = await self.fetch_citation_metrics(pmid)
+        article.citation_metrics = await self.fetch_citation_metrics(article.article_id)
 
         return article
 
