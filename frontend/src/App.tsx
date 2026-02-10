@@ -69,7 +69,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {isLoading && <LoadingOverlay />}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 relative z-[60]">
         <div className="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
           <div>
             <h1
