@@ -82,9 +82,7 @@ class PreprintClient:
     async def _fetch_rxiv(self, doi: str, server: str) -> ArticleMetadata:
         """Fetch from biorxiv or medrxiv API."""
         # The biorxiv API serves both biorxiv and medrxiv
-        # Strip the 10.1101/ prefix for the API call
-        doi_suffix = doi.replace("10.1101/", "")
-        api_url = f"https://api.biorxiv.org/details/{server}/{doi_suffix}"
+        api_url = f"https://api.biorxiv.org/details/{server}/{doi}"
         response = await self.client.get(api_url)
         response.raise_for_status()
 
@@ -93,7 +91,7 @@ class PreprintClient:
         if not collection:
             # If not found on the specified server, try the other one
             other_server = "medrxiv" if server == "biorxiv" else "biorxiv"
-            api_url = f"https://api.biorxiv.org/details/{other_server}/{doi_suffix}"
+            api_url = f"https://api.biorxiv.org/details/{other_server}/{doi}"
             response = await self.client.get(api_url)
             response.raise_for_status()
             data = response.json()
