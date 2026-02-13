@@ -10,13 +10,6 @@ interface ResultsDisplayProps {
 
 type TabType = 'original' | 'summary' | 'translation';
 
-const SOURCE_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  pubmed: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'PubMed' },
-  arxiv: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'arXiv' },
-  biorxiv: { bg: 'bg-red-100', text: 'text-red-800', label: 'bioRxiv' },
-  medrxiv: { bg: 'bg-indigo-100', text: 'text-indigo-800', label: 'medRxiv' },
-};
-
 function CacheBadge({ cachedAt }: { cachedAt: string }) {
   const date = new Date(cachedAt);
   const formatted = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -30,17 +23,9 @@ function CacheBadge({ cachedAt }: { cachedAt: string }) {
   );
 }
 
-function SourceBadge({ source }: { source: string }) {
-  const badge = SOURCE_BADGES[source] || { bg: 'bg-gray-100', text: 'text-gray-800', label: source };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>
-      {badge.label}
-    </span>
-  );
-}
-
 export function ResultsDisplay({ article, processedResult, onReport, isLoading }: ResultsDisplayProps) {
   const [activeTab, setActiveTab] = useState<TabType>('original');
+  const [showCopied, setShowCopied] = useState(false);
 
   // Auto-switch to summary tab when results come in
   const hasProcessedContent = processedResult?.summary || processedResult?.translated_abstract;
@@ -56,7 +41,10 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
   }
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text).then(() => {
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    });
   };
 
   const handleReportClick = (resultType: 'summary' | 'translation') => {
@@ -103,25 +91,13 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
           <span className="text-gray-400">|</span>
           <span>{article.pub_date}</span>
         </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <SourceBadge source={article.source} />
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-            {article.article_id}
-          </span>
-          {article.pmcid && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-              {article.pmcid}
-            </span>
-          )}
-          {article.has_full_text && (
+        {article.has_full_text && (
+          <div className="mt-2">
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
               Full Text Available
             </span>
-          )}
-          {article.from_cache && article.cached_at && (
-            <CacheBadge cachedAt={article.cached_at} />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Citation Metrics — only for PubMed articles */}
         {isPubMed && article.citation_metrics && (
@@ -350,6 +326,12 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
           </div>
         )}
       </div>
+
+      {showCopied && (
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg animate-fade-in">
+          Copied!
+        </div>
+      )}
     </div>
   );
 }

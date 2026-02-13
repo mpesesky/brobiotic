@@ -190,8 +190,8 @@ CONTENT:
 {content}
 
 Please provide:
-1. SUMMARY: A concise summary (1-2 short paragraphs, shorter than the original abstract)
-2. KEY FINDINGS: The most important findings (3-5 brief bullet points).{figure_instruction}
+1. SUMMARY: A brief high-level overview (2-4 sentences) covering the research question, approach, and overall conclusion. Do NOT list specific results here — those belong in KEY FINDINGS.
+2. KEY FINDINGS: The most important specific findings (3-5 brief bullet points).{figure_instruction}
 3. CONTEXT: One paragraph on how this research fits into the broader field. Incorporate the citation metrics to assess the paper's impact. Based on your knowledge, indicate whether this work is: well-accepted in the field, controversial, contradicted by other studies, preliminary/unsupported by other work, or if you cannot assess its reception. Be specific about any known controversies or supporting/contradicting evidence.{acronym_instruction}"""
 
         message = await self.client.messages.create(

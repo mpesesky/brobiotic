@@ -134,7 +134,7 @@ export function HowTo({ onBack }: HowToProps) {
           <ul className="space-y-1.5 text-sm text-gray-600">
             <li className="flex items-start gap-2">
               <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5" />
-              <span>For PubMed articles, citation metrics from iCite are shown when available. Preprints do not have citation metrics.</span>
+              <span>For PubMed articles, citation metrics from <a href="https://icite.od.nih.gov/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">iCite</a> are shown when available. Preprints do not have citation metrics.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5" />
@@ -145,6 +145,44 @@ export function HowTo({ onBack }: HowToProps) {
               <span>Preprints have <em>not</em> been peer reviewed. The preprint notice in the results is a reminder of this.</span>
             </li>
           </ul>
+        </div>
+
+        <div className="pt-4 border-t border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Understanding Citation Metrics</h3>
+          <p className="text-sm text-gray-600 leading-relaxed mb-3">
+            For PubMed articles, citation data is pulled from NIH's{' '}
+            <a href="https://icite.od.nih.gov/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">iCite</a>.
+            These metrics help gauge an article's impact relative to its field:
+          </p>
+          <dl className="space-y-3 text-sm text-gray-600">
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">Citation Count</dt>
+              <dd>Total number of times the article has been cited by other publications.</dd>
+            </div>
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">Citations per Year</dt>
+              <dd>Average citations received per year since publication, useful for comparing articles of different ages.</dd>
+            </div>
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">Relative Citation Ratio</dt>
+              <dd>How the article's citation rate compares to the average for its field. A value of <strong>1.0</strong> is field average; <strong>2.0</strong> means twice as many citations as typical.</dd>
+            </div>
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">NIH Percentile</dt>
+              <dd>Where the article ranks among all NIH-funded papers of the same age. A 90th percentile article is cited more than 90% of comparable papers.</dd>
+            </div>
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">Expected Citations</dt>
+              <dd>The number of citations a typical article in the same field and of the same age would receive. Comparing this to the actual count shows whether the article is above or below average.</dd>
+            </div>
+            <div className="flex items-start gap-2">
+              <dt className="font-medium text-gray-700 flex-shrink-0 w-44">Field Citation Rate</dt>
+              <dd>The average citation rate for articles in this field, providing baseline context for the other metrics.</dd>
+            </div>
+          </dl>
+          <p className="text-sm text-gray-500 leading-relaxed mt-3">
+            Metrics are typically unavailable for very recent articles or those not yet indexed by iCite. Preprints never have citation metrics.
+          </p>
         </div>
       </div>
     </div>
