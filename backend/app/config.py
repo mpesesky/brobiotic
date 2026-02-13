@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-4-20250514"
 
     # Database settings
-    database_path: str = "data/brobiotic.db"
+    database_url: str = "postgresql://localhost:5432/brobiotic"
 
     model_config = SettingsConfigDict(
         env_file=("../.env", ".env"),  # Check parent dir first, then current

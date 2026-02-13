@@ -15,6 +15,7 @@ async def lifespan(app: FastAPI):
     """Initialize services on startup."""
     await DatabaseService.initialize()
     yield
+    await DatabaseService.shutdown()
 
 
 app = FastAPI(
