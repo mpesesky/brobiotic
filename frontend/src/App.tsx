@@ -122,6 +122,7 @@ function App() {
                   article={article}
                   processedResult={processedResult}
                   onReport={handleReport}
+                  onFetch={handleFetch}
                   isLoading={isLoading}
                 />
               </div>

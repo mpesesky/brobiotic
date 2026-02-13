@@ -1,6 +1,7 @@
 import type {
   ArticleFetchRequest,
   ArticleFetchResponse,
+  ExampleArticlesResponse,
   ProcessRequest,
   ProcessResponse,
   ReportBadOutputRequest,
@@ -15,6 +16,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new Error(error.detail || `HTTP error ${response.status}`);
   }
   return response.json();
+}
+
+export async function getExampleArticles(): Promise<ExampleArticlesResponse> {
+  const response = await fetch(`${API_BASE}/articles/examples`);
+  return handleResponse<ExampleArticlesResponse>(response);
 }
 
 export async function fetchArticle(identifier: string): Promise<ArticleFetchResponse> {

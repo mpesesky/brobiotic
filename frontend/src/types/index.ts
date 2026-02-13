@@ -60,6 +60,16 @@ export interface ProcessResponse {
   result_id: string | null;
 }
 
+export interface ExampleArticle {
+  article_id: string;
+  title: string;
+  source: string;
+}
+
+export interface ExampleArticlesResponse {
+  articles: ExampleArticle[];
+}
+
 export interface ErrorResponse {
   detail: string;
 }

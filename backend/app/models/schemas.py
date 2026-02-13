@@ -94,6 +94,18 @@ class ReportBadOutputResponse(BaseModel):
     new_result: ProcessResponse
 
 
+class ExampleArticle(BaseModel):
+    """A cached article shown as an example."""
+    article_id: str
+    title: str
+    source: str
+
+
+class ExampleArticlesResponse(BaseModel):
+    """Response containing example articles from the cache."""
+    articles: list[ExampleArticle]
+
+
 class ErrorResponse(BaseModel):
     """Standard error response."""
     detail: str

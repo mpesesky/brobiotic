@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { ExampleArticles } from './ExampleArticles';
 import type { ArticleFetchResponse, ProcessResponse, ReportBadOutputRequest } from '../types';
 
 interface ResultsDisplayProps {
   article: ArticleFetchResponse | null;
   processedResult: ProcessResponse | null;
   onReport: (request: ReportBadOutputRequest) => void;
+  onFetch: (identifier: string) => void;
   isLoading: boolean;
 }
 
@@ -23,7 +25,7 @@ function CacheBadge({ cachedAt }: { cachedAt: string }) {
   );
 }
 
-export function ResultsDisplay({ article, processedResult, onReport, isLoading }: ResultsDisplayProps) {
+export function ResultsDisplay({ article, processedResult, onReport, onFetch, isLoading }: ResultsDisplayProps) {
   const [activeTab, setActiveTab] = useState<TabType>('original');
   const [showCopied, setShowCopied] = useState(false);
 
@@ -31,13 +33,7 @@ export function ResultsDisplay({ article, processedResult, onReport, isLoading }
   const hasProcessedContent = processedResult?.summary || processedResult?.translated_abstract;
 
   if (!article) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-        <p className="text-gray-400 text-center italic">
-          Enter an article identifier above to get started
-        </p>
-      </div>
-    );
+    return <ExampleArticles onFetch={onFetch} />;
   }
 
   const copyToClipboard = (text: string) => {

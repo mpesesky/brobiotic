@@ -113,6 +113,25 @@ class DatabaseService:
         finally:
             await db.close()
 
+    # ---- Example articles ----
+
+    @classmethod
+    async def get_example_articles(cls, limit: int = 5) -> list[dict]:
+        """Return random cached articles for the examples box."""
+        db = await cls._get_db()
+        try:
+            cursor = await db.execute(
+                "SELECT article_id, title, source FROM articles ORDER BY RANDOM() LIMIT ?",
+                (limit,),
+            )
+            rows = await cursor.fetchall()
+            return [
+                {"article_id": row["article_id"], "title": row["title"], "source": row["source"]}
+                for row in rows
+            ]
+        finally:
+            await db.close()
+
     # ---- Article cache ----
 
     @classmethod
