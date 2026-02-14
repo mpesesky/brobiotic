@@ -29,7 +29,16 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
   const [activeTab, setActiveTab] = useState<TabType>('original');
   const [showCopied, setShowCopied] = useState(false);
 
-  // Auto-switch to summary tab once when results first arrive
+  // Reset to original tab when article changes (new fetch clears processedResult)
+  const prevArticle = useRef(article);
+  useEffect(() => {
+    if (article !== prevArticle.current) {
+      setActiveTab('original');
+      prevArticle.current = article;
+    }
+  }, [article]);
+
+  // Auto-switch to summary/translation tab once when results first arrive
   const prevProcessedResult = useRef(processedResult);
   useEffect(() => {
     if (processedResult && processedResult !== prevProcessedResult.current) {

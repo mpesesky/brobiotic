@@ -132,7 +132,7 @@ async def _fetch_article_from_source(identifier: str) -> ArticleMetadata:
 @router.get("/examples", response_model=ExampleArticlesResponse)
 async def get_examples():
     """Return random cached articles for the examples box."""
-    articles = await DatabaseService.get_example_articles(5)
+    articles = await DatabaseService.get_example_articles(3)
     return ExampleArticlesResponse(articles=articles)
 
 
