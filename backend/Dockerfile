@@ -9,9 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app/ ./app/
 
-# Create data directory (exists before Render disk mount overlays it)
-RUN mkdir -p /data
-
 # Expose port
 EXPOSE 8000
 
