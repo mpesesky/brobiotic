@@ -134,7 +134,7 @@ Writing guidelines:
 - Use neutral, objective language. Avoid promotional phrases like "groundbreaking," "significant advance," or "revolutionize."
 - State findings factually without editorializing their importance.
 - Let readers draw their own conclusions about impact.
-- When full text is provided, reference specific figures and tables (e.g., "Fig. 2", "Table 1") that support each key finding.
+- When full text is provided, every key finding MUST cite the specific figure(s) or table(s) that support it (e.g., "Fig. 2", "Table 1"). Do not list a finding without its supporting figure/table reference.
 - In the context section, critically assess the work's standing: Is it well-accepted, controversial, contradicted by other research, or too new to evaluate? Cite specific contradicting or supporting work if known.""",
 
             KnowledgeLevel.LAY_PERSON: """You are a science communicator summarizing articles for the general public.
@@ -158,7 +158,7 @@ Writing guidelines:
         acronym_instruction = ""
         if knowledge_level in (KnowledgeLevel.EXPERT, KnowledgeLevel.ADJACENT):
             if has_full_text:
-                figure_instruction = " For each finding, note the supporting figure(s) or table(s) in parentheses, e.g., '(Fig. 2, Table 1)'."
+                figure_instruction = " IMPORTANT: Every finding MUST cite the specific supporting figure(s) or table(s) in parentheses, e.g., '(Fig. 2, Table 1)'. Do not omit these references."
             acronym_instruction = "\n4. ACRONYMS: List any acronyms/abbreviations used in the article with their full meanings, formatted as 'ACRONYM: Full Meaning' (one per line)."
 
         # Build citation metrics section if available

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ExampleArticles } from './ExampleArticles';
 import type { ArticleFetchResponse, ProcessResponse, ReportBadOutputRequest } from '../types';
 
@@ -29,8 +29,18 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
   const [activeTab, setActiveTab] = useState<TabType>('original');
   const [showCopied, setShowCopied] = useState(false);
 
-  // Auto-switch to summary tab when results come in
-  const hasProcessedContent = processedResult?.summary || processedResult?.translated_abstract;
+  // Auto-switch to summary tab once when results first arrive
+  const prevProcessedResult = useRef(processedResult);
+  useEffect(() => {
+    if (processedResult && processedResult !== prevProcessedResult.current) {
+      if (processedResult.summary) {
+        setActiveTab('summary');
+      } else if (processedResult.translated_abstract) {
+        setActiveTab('translation');
+      }
+    }
+    prevProcessedResult.current = processedResult;
+  }, [processedResult]);
 
   if (!article) {
     return <ExampleArticles onFetch={onFetch} />;
@@ -65,13 +75,6 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
 
   const availableTabs = tabs.filter((t) => t.available);
 
-  // If we just got processed results and we're on original tab, switch to the new content
-  const effectiveTab =
-    activeTab === 'original' && hasProcessedContent
-      ? processedResult?.summary
-        ? 'summary'
-        : 'translation'
-      : activeTab;
 
   const isPubMed = article.source === 'pubmed';
 
@@ -156,7 +159,7 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  effectiveTab === tab.id
+                  activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
@@ -174,7 +177,7 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
       {/* Tab Content */}
       <div className="p-5">
         {/* Original Tab */}
-        {effectiveTab === 'original' && (
+        {activeTab === 'original' && (
           <div>
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Abstract</h4>
             {article.abstract ? (
@@ -186,7 +189,7 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
         )}
 
         {/* Summary Tab */}
-        {effectiveTab === 'summary' && processedResult?.summary && (
+        {activeTab === 'summary' && processedResult?.summary && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -274,7 +277,7 @@ export function ResultsDisplay({ article, processedResult, onReport, onFetch, is
         )}
 
         {/* Translation Tab */}
-        {effectiveTab === 'translation' && processedResult?.translated_abstract && (
+        {activeTab === 'translation' && processedResult?.translated_abstract && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
