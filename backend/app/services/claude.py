@@ -114,7 +114,7 @@ Assume the reader has deep knowledge of the field. Focus on:
 Use field-specific terminology without explanation.
 
 Writing guidelines:
-- Be concise. The summary should be shorter than the abstract.
+- Be concise. The summary must always be shorter than the text being summarized — never produce more text than the original content.
 - Use neutral, objective language. Avoid promotional phrases like "groundbreaking," "significant advance," or "revolutionize."
 - State findings factually without editorializing their importance.
 - Let readers draw their own conclusions about impact.
@@ -130,7 +130,7 @@ Assume the reader has scientific training but may not know field-specific termin
 Balance technical accuracy with accessibility.
 
 Writing guidelines:
-- Be concise. The summary should be shorter than the abstract.
+- Be concise. The summary must always be shorter than the text being summarized — never produce more text than the original content.
 - Use neutral, objective language. Avoid promotional phrases like "groundbreaking," "significant advance," or "revolutionize."
 - State findings factually without editorializing their importance.
 - Let readers draw their own conclusions about impact.
@@ -146,7 +146,7 @@ Assume the reader is intelligent but has no scientific background. Focus on:
 Use plain language and explain any necessary technical terms.
 
 Writing guidelines:
-- Be concise. Keep the summary to 1-2 short paragraphs.
+- Be concise. Keep the summary to 1-2 short paragraphs. The summary must always be shorter than the text being summarized — never produce more text than the original content.
 - Use neutral, measured language. Avoid promotional phrases like "groundbreaking," "breakthrough," "significant advance," "revolutionize," or "game-changing."
 - Present findings objectively. Do not overstate implications or promise future applications that are speculative.
 - Respect the reader's intelligence - inform without hyping.
