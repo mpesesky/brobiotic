@@ -64,7 +64,9 @@ TRANSLATED CONTENT:
 
         message = await self.client.messages.create(
             model=self.model,
-            max_tokens=4096,
+            max_tokens=6144,
+            # Keep thinking off to match token usage of pre-Sonnet-5 behavior
+            thinking={"type": "disabled"},
             messages=[
                 {"role": "user", "content": prompt}
             ]
@@ -196,7 +198,8 @@ Please provide:
 
         message = await self.client.messages.create(
             model=self.model,
-            max_tokens=2048,
+            max_tokens=3072,
+            thinking={"type": "disabled"},
             system=system_prompts[knowledge_level],
             messages=[
                 {"role": "user", "content": prompt}
@@ -288,7 +291,8 @@ Please provide:
         """Detect the language of the given text."""
         message = await self.client.messages.create(
             model=self.model,
-            max_tokens=50,
+            max_tokens=64,
+            thinking={"type": "disabled"},
             messages=[
                 {
                     "role": "user",
